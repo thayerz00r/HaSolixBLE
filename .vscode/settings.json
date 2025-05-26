@@ -1,0 +1,10 @@
+{
+    "cSpell.words": [
+        "Anker",
+        "Solix"
+    ],
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.formatOnSave": true
+    }
+}
