@@ -1,6 +1,14 @@
 {
     "config": {
       "step": {
+        "user": {
+          "title": "Set up Solix BLE Device",
+          "description": "Enter the MAC address of your Solix BLE device",
+          "data": {
+            "mac": "MAC Address",
+            "name": "Device Name (optional)"
+          }
+        },
         "confirm": {
           "description": "Do you want to set up {name} ({mac})?"
         }

@@ -1,6 +1,14 @@
 """SolixBLE integration."""
 
 import logging
+from typing import TYPE_CHECKING
+
+from SolixBLE import SolixBLEDevice
+
+from homeassistant.components.bluetooth import (
+    async_ble_device_from_address,
+    async_scanner_count,
+)
 
 from SolixBLE import SolixBLEDevice
 
@@ -9,20 +17,29 @@ from homeassistant.components.bluetooth import (
     async_scanner_count,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import Platform
+from homeassistant.const import CONF_MAC, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 
 _LOGGER = logging.getLogger(__name__)
 
-type SolixBLEConfigEntry = ConfigEntry[SolixBLEDevice]
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    SolixBLEConfigEntry = ConfigEntry[SolixBLEDevice]
+else:
+    SolixBLEConfigEntry = ConfigEntry
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: SolixBLEConfigEntry) -> bool:
     """Set up the integration from a config entry."""
 
-    assert entry.unique_id is not None
-    address = entry.unique_id.upper()
+    # Get MAC address from config data or use unique_id as fallback
+    if CONF_MAC in entry.data:
+        address = entry.data[CONF_MAC].upper()
+    else:
+        assert entry.unique_id is not None
+        address = entry.unique_id.upper()
 
     ble_device = async_ble_device_from_address(hass, address, connectable=True)
 

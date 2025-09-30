@@ -79,6 +79,44 @@ class SolixBLEConfigFlow(ConfigFlow, domain=DOMAIN):
 
         return await self.async_step_confirm()
 
+    async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Handle a flow initialized by the user."""
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            address = user_input[CONF_MAC].upper()
+            unique_id = dr.format_mac(address)
+            await self.async_set_unique_id(unique_id)
+            self._abort_if_unique_id_configured()
+
+            try:
+                await validate_input(self.hass, address)
+            except CannotConnect:
+                errors["base"] = "cannot_connect"
+            except CannotSubscribe:
+                errors["base"] = "cannot_subscribe"
+            except ScannerNotAvailable:
+                errors["base"] = "no_scanners"
+            except NotFound:
+                errors["base"] = "not_found"
+            except Exception:
+                _LOGGER.exception("Unexpected exception")
+                errors["base"] = "unknown"
+            else:
+                name = user_input.get(CONF_NAME, f"Solix BLE {address}")
+                return self.async_create_entry(title=name, data={CONF_MAC: address})
+
+        return self.async_show_form(
+            step_id="user",
+            data_schema=vol.Schema({
+                vol.Required(CONF_MAC): str,
+                vol.Optional(CONF_NAME): str,
+            }),
+            errors=errors,
+        )
+
     async def async_step_confirm(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
@@ -106,7 +144,10 @@ class SolixBLEConfigFlow(ConfigFlow, domain=DOMAIN):
                 _LOGGER.exception("Unexpected exception")
                 errors["base"] = "unknown"
             else:
-                return self.async_create_entry(title=self._discovery_info.name, data={})
+                return self.async_create_entry(
+                    title=self._discovery_info.name,
+                    data={CONF_MAC: self._discovery_info.address}
+                )
 
         return self.async_show_form(
             step_id="confirm",
